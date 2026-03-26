@@ -1,4 +1,9 @@
+# Environments
 venv/
+
+# OS files
+**/.DS_Store
+
 *~
 jsf/__pycache__/
 tests/__pycache__/
