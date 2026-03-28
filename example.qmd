@@ -1,0 +1,93 @@
+---
+title: "jsf package test"
+format: html
+---
+
+Importing neccesery packages:
+```{python}
+import pandas as pd
+import random
+import matplotlib.pyplot as plt
+import jsf
+
+random.seed(102)
+```
+Pandas to store the simulation results.  
+Random to set the seed for reproducibility.   
+Matplotlib to plot the results.  
+jsf to simulate the process.  
+
+```{python}
+x0 = [50, 10]
+```
+This initalises the model with 50 prey and 10 predators.
+
+```{python}
+mA = 2.00
+mB = 0.05
+mC = 1.50
+```
+Model parameters:  
+mA - rate of the prey  
+mB - the predation rate  
+mC - the death rate of tahe predators  
+
+Define the rates of the model:
+
+``` {python}
+rates = lambda x, _: [mA * x[0],
+                      mC * x[1],
+                      mB * x[0] * x[1]]
+
+reactant_matrix = [[1 , 0],
+                   [0 , 1],
+                   [1 , 1]]
+
+product_matrix = [[2 , 0],
+                  [0 , 0],
+                  [0 , 2]]
+
+t_max = 10
+```
+
+Stoichiometric matrices to define the stoichiometry of the process.    
+DoDisc is a boolean list, and describes which compartments are initially represented as stochastic processes.
+
+``` {python}
+stoich = {
+         "nu": [ [a - b for a, b in zip(r1, r2)]
+                for r1, r2 in zip(product_matrix, reactant_matrix) ],
+         "DoDisc": [1, 1],
+         "nuReactant": reactant_matrix,
+         "nuProduct": product_matrix,
+         }
+
+print(stoich)
+```
+Set the time step, dt to be 0.01 and the threshold for switching, SwitchingThreshold, to be 30 for both compartments. EnforceDo is a boolean list and describes which compartments are permitted to dynamically change between discrete and continuous regimes. If an entry of EnforceDo is 0, then that compartment is allowed to switch between discrete and continuous regimes. If an entry of EnforceDo is 1, then that compartment is not allowed to switch, and will remain in the regime it was initialised in.
+
+``` {python}
+my_opts = {
+            "EnforceDo": [0, 0],
+            "dt": 0.01,
+            "SwitchingThreshold": [30, 30]
+           }
+```
+
+
+``` {python}
+sim = jsf.jsf(x0, rates, stoich, t_max, config=my_opts, method="operator-splitting")
+```
+
+Visualising the simulation
+
+``` {python}
+plt.plot(sim[1], sim[0][0], label="Prey")
+plt.plot(sim[1], sim[0][1], label="Predator")
+plt.axhline(y=my_opts["SwitchingThreshold"][1], color="k", linestyle="--")
+plt.xlabel("Time")
+plt.ylabel("Population size")
+plt.legend()
+plt.savefig('PredatorPrey.png', dpi=500)
+plt.show()
+```
